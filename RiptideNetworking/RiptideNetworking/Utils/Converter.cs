@@ -845,6 +845,71 @@ namespace Riptide.Utils
         }
         #endregion
 
+        #region Half
+        /// <summary>Converts a given <see cref="Half"/> to bytes and writes them into the given array.</summary>
+        /// <param name="value">The <see cref="Half"/> to convert.</param>
+        /// <param name="array">The array to write the bytes into.</param>
+        /// <param name="startIndex">The position in the array at which to write the bytes.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FromHalf(Half value, byte[] array, int startIndex)
+        {
+            HalfConverter converter = new HalfConverter { HalfValue = value };
+#if BIG_ENDIAN
+            array[startIndex + 1] = converter.Byte2;
+            array[startIndex    ] = converter.Byte3;
+#else
+            array[startIndex    ] = converter.Byte0;
+            array[startIndex + 1] = converter.Byte1;
+#endif
+        }
+
+        /// <summary>Converts the 2 bytes in the array at <paramref name="startIndex"/> to a <see cref="Half"/>.</summary>
+        /// <param name="array">The array to read the bytes from.</param>
+        /// <param name="startIndex">The position in the array at which to read the bytes.</param>
+        /// <returns>The converted <see cref="Half"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Half ToHalf(byte[] array, int startIndex)
+        {
+#if BIG_ENDIAN
+            return new HalfConverter { Byte1 = array[startIndex + 1], Byte0 = array[startIndex] }.HalfValue;
+#else
+            return new HalfConverter { Byte0 = array[startIndex], Byte1 = array[startIndex + 1] }.HalfValue;
+#endif
+        }
+
+        /// <summary>Converts <paramref name="value"/> to 16 bits and writes them into <paramref name="array"/> at <paramref name="startBit"/>.</summary>
+        /// <param name="value">The <see cref="Half"/> to convert.</param>
+        /// <param name="array">The array to write the bits into.</param>
+        /// <param name="startBit">The position in the array at which to write the bits.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void HalfToBits(Half value, byte[] array, int startBit)
+        {
+            UIntToBits(new HalfConverter { HalfValue = value }.UIntValue, array, startBit);
+        }
+        /// <inheritdoc cref="HalfToBits(Half, byte[], int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void HalfToBits(Half value, ulong[] array, int startBit)
+        {
+            UIntToBits(new HalfConverter { HalfValue = value }.UIntValue, array, startBit);
+        }
+
+        /// <summary>Converts the 16 bits at <paramref name="startBit"/> in <paramref name="array"/> to a <see cref="Half"/>.</summary>
+        /// <param name="array">The array to convert the bits from.</param>
+        /// <param name="startBit">The position in the array from which to read the bits.</param>
+        /// <returns>The converted <see cref="Half"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Half HalfFromBits(byte[] array, int startBit)
+        {
+            return new HalfConverter { UIntValue = UIntFromBits(array, startBit) }.HalfValue;
+        }
+        /// <inheritdoc cref="HalfFromBits(byte[], int)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Half HalfFromBits(ulong[] array, int startBit)
+        {
+            return new HalfConverter { UIntValue = UIntFromBits(array, startBit) }.HalfValue;
+        }
+        #endregion
+
         #region Double
         /// <summary>Converts a given <see cref="double"/> to bytes and writes them into the given array.</summary>
         /// <param name="value">The <see cref="double"/> to convert.</param>
@@ -931,6 +996,17 @@ namespace Riptide.Utils
         [FieldOffset(3)] public byte Byte3;
 
         [FieldOffset(0)] public float FloatValue;
+
+        [FieldOffset(0)] public uint UIntValue;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct HalfConverter
+    {
+        [FieldOffset(0)] public byte Byte0;
+        [FieldOffset(1)] public byte Byte1;
+
+        [FieldOffset(0)] public Half HalfValue;
 
         [FieldOffset(0)] public uint UIntValue;
     }

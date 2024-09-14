@@ -1605,6 +1605,104 @@ namespace Riptide
         }
         #endregion
 
+        #region Half
+        /// <summary>Adds a <see cref="Half"/> to the message.</summary>
+        /// <param name="value">The <see cref="Half"/> to add.</param>
+        /// <returns>The message that the <see cref="Half"/> was added to.</returns>
+        public Message AddHalf(Half value)
+        {
+            if (UnwrittenBits < Unsafe.SizeOf<Half>() * BitsPerByte)
+                throw new InsufficientCapacityException(this, HalfName, Unsafe.SizeOf<Half>() * BitsPerByte);
+
+            Converter.HalfToBits(value, data, writeBit);
+            writeBit += Unsafe.SizeOf<Half>() * BitsPerByte;
+            return this;
+        }
+
+        /// <summary>Retrieves a <see cref="Half"/> from the message.</summary>
+        /// <returns>The <see cref="Half"/> that was retrieved.</returns>
+        public Half GetHalf()
+        {
+            if (UnreadBits < Unsafe.SizeOf<Half>() * BitsPerByte)
+            {
+                RiptideLogger.Log(LogType.Error, NotEnoughBitsError(HalfName, $"{default(Half)}"));
+                return default;
+            }
+
+            Half value = Converter.HalfFromBits(data, readBit);
+            readBit += Unsafe.SizeOf<Half>() * BitsPerByte;
+            return value;
+        }
+
+        /// <summary>Adds a <see cref="Half"/> array to the message.</summary>
+        /// <param name="array">The array to add.</param>
+        /// <param name="includeLength">Whether or not to include the length of the array in the message.</param>
+        /// <returns>The message that the array was added to.</returns>
+        public Message AddHalfs(Half[] array, bool includeLength = true)
+        {
+            if (includeLength)
+                AddVarULong((uint)array.Length);
+
+            if (UnwrittenBits < array.Length * Unsafe.SizeOf<Half>() * BitsPerByte)
+                throw new InsufficientCapacityException(this, array.Length, HalfName, Unsafe.SizeOf<Half>() * BitsPerByte);
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                Converter.HalfToBits(array[i], data, writeBit);
+                writeBit += Unsafe.SizeOf<Half>() * BitsPerByte;
+            }
+
+            return this;
+        }
+
+        /// <summary>Retrieves a <see cref="Half"/> array from the message.</summary>
+        /// <returns>The array that was retrieved.</returns>
+        public Half[] GetHalfs() => GetHalfs((int)GetVarULong());
+        /// <summary>Retrieves a <see cref="Half"/> array from the message.</summary>
+        /// <param name="amount">The amount of Halfs to retrieve.</param>
+        /// <returns>The array that was retrieved.</returns>
+        public Half[] GetHalfs(int amount)
+        {
+            Half[] array = new Half[amount];
+            ReadHalfs(amount, array);
+            return array;
+        }
+        /// <summary>Populates a <see cref="Half"/> array with Halfs retrieved from the message.</summary>
+        /// <param name="intoArray">The array to populate.</param>
+        /// <param name="startIndex">The position at which to start populating the array.</param>
+        public void GetHalfs(Half[] intoArray, int startIndex = 0) => GetHalfs((int)GetVarULong(), intoArray, startIndex);
+        /// <summary>Populates a <see cref="Half"/> array with Halfs retrieved from the message.</summary>
+        /// <param name="amount">The amount of Halfs to retrieve.</param>
+        /// <param name="intoArray">The array to populate.</param>
+        /// <param name="startIndex">The position at which to start populating the array.</param>
+        public void GetHalfs(int amount, Half[] intoArray, int startIndex = 0)
+        {
+            if (startIndex + amount > intoArray.Length)
+                throw new ArgumentException(nameof(amount), ArrayNotLongEnoughError(amount, intoArray.Length, startIndex, HalfName));
+
+            ReadHalfs(amount, intoArray, startIndex);
+        }
+
+        /// <summary>Reads a number of Halfs from the message and writes them into the given array.</summary>
+        /// <param name="amount">The amount of Halfs to read.</param>
+        /// <param name="intoArray">The array to write the Halfs into.</param>
+        /// <param name="startIndex">The position at which to start writing into the array.</param>
+        private void ReadHalfs(int amount, Half[] intoArray, int startIndex = 0)
+        {
+            if (UnreadBits < amount * Unsafe.SizeOf<Half>() * BitsPerByte)
+            {
+                RiptideLogger.Log(LogType.Error, NotEnoughBitsError(amount, HalfName));
+                amount = UnreadBits / (Unsafe.SizeOf<Half>() * BitsPerByte);
+            }
+
+            for (int i = 0; i < amount; i++)
+            {
+                intoArray[startIndex + i] = Converter.HalfFromBits(data, readBit);
+                readBit += Unsafe.SizeOf<Half>() * BitsPerByte;
+            }
+        }
+        #endregion
+
         #region Double
         /// <summary>Adds a <see cref="double"/> to the message.</summary>
         /// <param name="value">The <see cref="double"/> to add.</param>
@@ -1894,6 +1992,10 @@ namespace Riptide
         /// <remarks>This method is simply an alternative way of calling <see cref="AddFloat(float)"/>.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Message Add(float value) => AddFloat(value);
+        /// <inheritdoc cref="AddHalf(Half)"/>
+        /// <remarks>This method is simply an alternative way of calling <see cref="AddHalf(Half)"/>.</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Message Add(Half value) => AddHalf(value);
         /// <inheritdoc cref="AddDouble(double)"/>
         /// <remarks>This method is simply an alternative way of calling <see cref="AddDouble(double)"/>.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1983,6 +2085,8 @@ namespace Riptide
         private const string ULongName       = "ulong";
         /// <summary>The name of a <see cref="float"/> value.</summary>
         private const string FloatName       = "float";
+        /// <summary>The name of a <see cref="Half"/> value.</summary>
+        private const string HalfName = "Half";
         /// <summary>The name of a <see cref="double"/> value.</summary>
         private const string DoubleName      = "double";
         /// <summary>The name of a <see cref="string"/> value.</summary>
