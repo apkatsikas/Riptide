@@ -858,7 +858,7 @@ namespace Riptide.Utils
             array[startIndex + 1] = converter.Byte2;
             array[startIndex    ] = converter.Byte3;
 #else
-            array[startIndex] = converter.Byte0;
+            array[startIndex    ] = converter.Byte0;
             array[startIndex + 1] = converter.Byte1;
 #endif
         }
