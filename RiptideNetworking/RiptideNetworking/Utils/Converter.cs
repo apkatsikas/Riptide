@@ -863,15 +863,15 @@ namespace Riptide.Utils
 #endif
         }
 
-        /// <summary>Converts the 2 bytes in the array at <paramref name="startIndex"/> to a <see cref="float"/>.</summary>
+        /// <summary>Converts the 2 bytes in the array at <paramref name="startIndex"/> to a <see cref="Half"/>.</summary>
         /// <param name="array">The array to read the bytes from.</param>
         /// <param name="startIndex">The position in the array at which to read the bytes.</param>
-        /// <returns>The converted <see cref="float"/>.</returns>
+        /// <returns>The converted <see cref="Half"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Half ToHalf(byte[] array, int startIndex)
         {
 #if BIG_ENDIAN
-            return new FloatConverter { Byte1 = array[startIndex + 2], Byte0 = array[startIndex + 3] }.FloatValue;
+            return new HalfConverter { Byte1 = array[startIndex + 1], Byte0 = array[startIndex] }.HalfValue;
 #else
             return new HalfConverter { Byte0 = array[startIndex], Byte1 = array[startIndex + 1] }.HalfValue;
 #endif
@@ -886,14 +886,14 @@ namespace Riptide.Utils
         {
             UIntToBits(new HalfConverter { HalfValue = value }.UIntValue, array, startBit);
         }
-        /// <inheritdoc cref="FloatToBits(float, byte[], int)"/>
+        /// <inheritdoc cref="HalfToBits(Half, byte[], int)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void HalfToBits(Half value, ulong[] array, int startBit)
         {
             UIntToBits(new HalfConverter { HalfValue = value }.UIntValue, array, startBit);
         }
 
-        /// <summary>Converts the 16 bits at <paramref name="startBit"/> in <paramref name="array"/> to a <see cref="float"/>.</summary>
+        /// <summary>Converts the 16 bits at <paramref name="startBit"/> in <paramref name="array"/> to a <see cref="Half"/>.</summary>
         /// <param name="array">The array to convert the bits from.</param>
         /// <param name="startBit">The position in the array from which to read the bits.</param>
         /// <returns>The converted <see cref="Half"/>.</returns>
@@ -902,7 +902,7 @@ namespace Riptide.Utils
         {
             return new HalfConverter { UIntValue = UIntFromBits(array, startBit) }.HalfValue;
         }
-        /// <inheritdoc cref="FloatFromBits(byte[], int)"/>
+        /// <inheritdoc cref="HalfFromBits(byte[], int)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Half HalfFromBits(ulong[] array, int startBit)
         {
