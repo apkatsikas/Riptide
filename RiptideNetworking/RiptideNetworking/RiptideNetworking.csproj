@@ -4,7 +4,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <RootNamespace>Riptide</RootNamespace>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>RiptideNetworking.Riptide</PackageId>
     <Authors>Tom Weiland</Authors>
     <Product>Riptide Networking</Product>
