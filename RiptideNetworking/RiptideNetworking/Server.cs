@@ -88,7 +88,7 @@ namespace Riptide
 
         /// <summary>Stops the server if it's running and swaps out the transport it's using.</summary>
         /// <param name="newTransport">The new underlying transport server to use for sending and receiving data.</param>
-        /// <remarks>This method does not automatically restart the server. To continue accepting connections, <see cref="Start(ushort, ushort, byte, bool)"/> must be called again.</remarks>
+        /// <remarks>This method does not automatically restart the server. To continue accepting connections, <see cref="Start(ushort, ushort)"/> must be called again.</remarks>
         public void ChangeTransport(IServer newTransport)
         {
             Stop();
@@ -98,18 +98,11 @@ namespace Riptide
         /// <summary>Starts the server.</summary>
         /// <param name="port">The local port on which to start the server.</param>
         /// <param name="maxClientCount">The maximum number of concurrent connections to allow.</param>
-        /// <param name="messageHandlerGroupId">The ID of the group of message handler methods to use when building <see cref="messageHandlers"/>.</param>
-        /// <param name="useMessageHandlers">Whether or not the server should use the built-in message handler system.</param>
-        /// <remarks>Setting <paramref name="useMessageHandlers"/> to <see langword="false"/> will disable the automatic detection and execution of methods with the <see cref="MessageHandlerAttribute"/>, which is beneficial if you prefer to handle messages via the <see cref="MessageReceived"/> event.</remarks>
-        public void Start(ushort port, ushort maxClientCount, byte messageHandlerGroupId = 0, bool useMessageHandlers = true)
+        public void Start(ushort port, ushort maxClientCount)
         {
             Stop();
 
             IncreaseActiveCount();
-            this.useMessageHandlers = useMessageHandlers;
-            if (useMessageHandlers)
-                CreateMessageHandlersDictionary(messageHandlerGroupId);
-
             MaxClientCount = maxClientCount;
             clients = new Dictionary<ushort, Connection>(maxClientCount);
             InitializeClientIds();
@@ -137,42 +130,6 @@ namespace Riptide
             transport.Connected -= HandleConnectionAttempt;
             transport.DataReceived -= HandleData;
             transport.Disconnected -= TransportDisconnected;
-        }
-
-        /// <inheritdoc/>
-        protected override void CreateMessageHandlersDictionary(byte messageHandlerGroupId)
-        {
-            MethodInfo[] methods = FindMessageHandlers();
-
-            messageHandlers = new Dictionary<ushort, MessageHandler>(methods.Length);
-            foreach (MethodInfo method in methods)
-            {
-                MessageHandlerAttribute attribute = method.GetCustomAttribute<MessageHandlerAttribute>();
-                if (attribute.GroupId != messageHandlerGroupId)
-                    continue;
-
-                if (!method.IsStatic)
-                    throw new NonStaticHandlerException(method.DeclaringType, method.Name);
-
-                Delegate serverMessageHandler = Delegate.CreateDelegate(typeof(MessageHandler), method, false);
-                if (serverMessageHandler != null)
-                {
-                    // It's a message handler for Server instances
-                    if (messageHandlers.ContainsKey(attribute.MessageId))
-                    {
-                        MethodInfo otherMethodWithId = messageHandlers[attribute.MessageId].GetMethodInfo();
-                        throw new DuplicateHandlerException(attribute.MessageId, method, otherMethodWithId);
-                    }
-                    else
-                        messageHandlers.Add(attribute.MessageId, (MessageHandler)serverMessageHandler);
-                }
-                else
-                {
-                    // It's not a message handler for Server instances, but it might be one for Client instances
-                    if (Delegate.CreateDelegate(typeof(Client.MessageHandler), method, false) == null)
-                        throw new InvalidHandlerSignatureException(method.DeclaringType, method.Name);
-                }
-            }
         }
 
         /// <summary>Handles an incoming connection attempt.</summary>
@@ -573,13 +530,10 @@ namespace Riptide
 
             MessageReceived?.Invoke(this, new MessageReceivedEventArgs(fromConnection, messageId, message));
 
-            if (useMessageHandlers)
-            {
-                if (messageHandlers.TryGetValue(messageId, out MessageHandler messageHandler))
-                    messageHandler(fromConnection.Id, message);
-                else
-                    RiptideLogger.Log(LogType.Warning, LogName, $"No message handler method found for message ID {messageId}!");
-            }
+            if (messageHandlers.TryGetValue(messageId, out MessageHandler messageHandler))
+                messageHandler(fromConnection.Id, message);
+            else
+                RiptideLogger.Log(LogType.Warning, LogName, $"No message handler method found for message ID {messageId}!");
         }
 
         /// <summary>Invokes the <see cref="ClientDisconnected"/> event.</summary>
