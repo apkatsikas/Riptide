@@ -72,7 +72,7 @@ namespace Riptide
             if (!idEnum.IsEnum)
                 throw new ArgumentException($"Parameter '{nameof(idEnum)}' must be an enum type!", nameof(idEnum));
 
-            return Enum.GetValues(idEnum).Cast<ushort>().Max() + 1;
+            return Enum.GetValuesAsUnderlyingType(idEnum).Cast<ushort>().Max() + 1;
         }
 
         /// <summary>Sets the filter size.</summary>
