@@ -47,7 +47,12 @@ namespace Riptide
         public MessageRelayFilter(Type idEnum, params Enum[] idsToEnable)
         {
             Set(GetSizeFromEnum(idEnum));
-            EnableIds(idsToEnable.Cast<ushort>().ToArray());
+
+            ushort[] castIds = [];
+            for (var i=0; i<idsToEnable.Length; i++) {
+                castIds[i] = Convert.ToUInt16(idsToEnable[i]);
+            }
+            EnableIds(castIds);
         }
 
         /// <summary>Enables auto relaying for the given message IDs.</summary>
