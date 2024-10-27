@@ -45,6 +45,9 @@ namespace Riptide
         /// <summary>An array of all the currently connected clients.</summary>
         /// <remarks>The position of each <see cref="Connection"/> instance in the array does <i>not</i> correspond to that client's numeric ID (except by coincidence).</remarks>
         public Connection[] Clients => clients.Values.ToArray();
+        /// <summary>The property on which to set Message Handlers.</summary>
+        public Dictionary<ushort, MessageHandler> MessageHandlers { set => messageHandlers = value; }
+
         /// <summary>Encapsulates a method that handles a message from a client.</summary>
         /// <param name="fromClientId">The numeric ID of the client from whom the message was received.</param>
         /// <param name="message">The message that was received.</param>

@@ -56,6 +56,8 @@ namespace Riptide
         // use a local variable in the Connect method, but that's arguably not any cleaner. This
         // property will also probably only be used rarely from outside the class/library.
         public Connection Connection => connection;
+        /// <summary>The property on which to set Message Handlers.</summary>
+        public Dictionary<ushort, MessageHandler> MessageHandlers { set => messageHandlers = value; }
         /// <summary>Encapsulates a method that handles a message from a server.</summary>
         /// <param name="message">The message that was received.</param>
         public delegate void MessageHandler(Message message);
@@ -66,7 +68,7 @@ namespace Riptide
         private int connectionAttempts;
         /// <summary>How many connection attempts to make before giving up.</summary>
         private int maxConnectionAttempts;
-        /// <inheritdoc cref="Server.messageHandlers"/>
+        /// <inheritdoc cref="Server.MessageHandlers"/>
         private Dictionary<ushort, MessageHandler> messageHandlers;
         /// <summary>The underlying transport's client that is used for sending and receiving data.</summary>
         private IClient transport;
